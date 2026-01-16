@@ -300,6 +300,7 @@ class board(base):
         self.__config	= ".renesas_bsp_rom_writer.{}".format(self.__board)
         self.__addr_map	= {}
         self.__map	= None
+        self.__auto_cmd = None
 
         self.confirm_location()
         self.config_load()
@@ -325,6 +326,7 @@ class board(base):
     # soc
     # mac
     # baudrate
+    # auto_cmd
     #--------------------
     def mode(self):	return self.__mode
     def board(self):	return self.__board
@@ -334,6 +336,7 @@ class board(base):
     def map(self):	return self.__map
     def mac(self):	return self.__mac
     def baudrate(self):	return self.__baudrate
+    def auto_cmd(self):	return self.__auto_cmd
 
     #--------------------
     # addr_map
@@ -409,6 +412,7 @@ class board(base):
         if (self.__tty  == ""): self.__tty  = self.config_read("tty")
         if (self.__mac  == ""): self.__mac  = self.config_read("mac")
         if (self.__mode == ""): self.__mode = self.config_read("mode")
+        self.__auto_cmd = self.config_read("auto_cmd")
 
     def config_save(self):
         if (self.__soc  is not None): self.config_write("soc",     self.__soc)
@@ -603,6 +607,7 @@ class board(base):
         if (self.__mode is not None): text += "  [Mode]:    {}\n".format(self.__mode)
         if (self.__tty  is not None): text += "* [TTY]:     {} ({})\n".format(self.__tty, self.baudrate()); deep = 1
         if (self.__mac  is not None): text += "* [MAC]:     {}\n".format(self.__mac); deep = 1
+        if (self.__auto_cmd is not None):   text += "  [Auto command]:     {}\n".format(self.__auto_cmd)
 
         if (deep):
             text += "\nPlease deeply check at * items\n"
@@ -648,6 +653,24 @@ class board(base):
             if (self.__mac  is not None): self.__mac  = ""
             if (self.__mode is not None): self.__mode = ""
             self.setup()
+
+    #--------------------
+    # auto_cmd_is_supported
+    #--------------------
+    def auto_cmd_is_supported(self):
+        if (self.__auto_cmd is None):
+            return False
+        else:
+            return True
+
+    #--------------------
+    # auto_cmd
+    #--------------------
+    def auto_cmd(self, cmd):
+        if (self.__auto_cmd is not None):
+            return self.run("{} {}".format(self.__auto_cmd, cmd))
+        else:
+            return False
 
 #====================================
 #
@@ -854,6 +877,18 @@ class guide(base):
     #--------------------
     def print_msg_power(self, onoff):
         self.msg("Power {}".format(onoff))
+
+    #--------------------
+    # auto_cmd_is_supported
+    #--------------------
+    def auto_cmd_is_supported(self):
+        return self.board().auto_cmd_is_supported()
+
+    #--------------------
+    # auto_cmd
+    #--------------------
+    def auto_cmd(self, cmd):
+        return self.board().auto_cmd(cmd)
 
     #--------------------
     # ask_loop
